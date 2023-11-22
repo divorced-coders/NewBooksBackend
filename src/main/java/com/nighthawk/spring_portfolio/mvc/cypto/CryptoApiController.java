@@ -20,9 +20,8 @@ public class CryptoApiController {
     private HttpStatus status; //last run status
     String last_run = null; //last run day of month
 
-    // GET Covid 19 Stats
-    @GetMapping("/daily")   //added to end of prefix as endpoint
-    public ResponseEntity<JSONObject> getCovid() {
+    @GetMapping("/market")   //added to end of prefix as endpoint
+    public ResponseEntity<JSONObject> getCryptoMarketData() {
 
         //calls API once a day, sets body and status properties
         String today = new Date().toString().substring(0,10); 
@@ -30,11 +29,9 @@ public class CryptoApiController {
         {
             try {  //APIs can fail (ie Internet or Service down)
                 
-                //RapidAPI header
                 HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://corona-virus-world-and-india-data.p.rapidapi.com/api"))
-                    .header("x-rapidapi-key", "dec069b877msh0d9d0827664078cp1a18fajsn2afac35ae063")
-                    .header("x-rapidapi-host", "corona-virus-world-and-india-data.p.rapidapi.com")
+                    .uri(URI.create("https://rest.coinapi.io/v1/assets"))
+                    .header("x-rapidapi-key", "A45C5875-F234-49DA-BED1-E30E1E15EA9E")
                     .method("GET", HttpRequest.BodyPublishers.noBody())
                     .build();
 
@@ -48,7 +45,7 @@ public class CryptoApiController {
             }
             catch (Exception e) {  //capture failure info
                 HashMap<String, String> status = new HashMap<>();
-                status.put("status", "RapidApi failure: " + e);
+                status.put("status", "CoinAPI failure: " + e);
 
                 //Setup object for error
                 this.body = (JSONObject) status;
