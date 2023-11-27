@@ -79,51 +79,43 @@ public class SortingMethods {
         }
     }
 
+
     //Heap
     public static void heapSort(int[] array) {
         int n = array.length;
-
         // Build max heap
         for (int i = n / 2 - 1; i >= 0; i--) {
             heapify(array, n, i);
         }
-
         // Extract elements from the heap one by one
         for (int i = n - 1; i > 0; i--) {
             // Swap the root (maximum element) with the last element
             int temp = array[0];
             array[0] = array[i];
             array[i] = temp;
-
             // Call heapify on the reduced heap
             heapify(array, i, 0);
         }
     }
-
     // To heapify a subtree rooted with node i which is an index in array[]
     public static void heapify(int[] array, int n, int i) {
         int largest = i; // Initialize largest as root
         int leftChild = 2 * i + 1;
         int rightChild = 2 * i + 2;
-
         // If left child is larger than root
         if (leftChild < n && array[leftChild] > array[largest]) {
             largest = leftChild;
         }
-
         // If right child is larger than largest so far
         if (rightChild < n && array[rightChild] > array[largest]) {
             largest = rightChild;
         }
-
         // If largest is not the root
         if (largest != i) {
             // Swap i and largest
             int swap = array[i];
             array[i] = array[largest];
             array[largest] = swap;
-
-            // Recursively heapify the affected sub-tree
             heapify(array, n, largest);
         }
     }
@@ -132,13 +124,11 @@ public class SortingMethods {
     public static void radixSort(int[] array) {
         // Find the maximum number to know the number of digits
         int max = getMax(array);
-
         // Do counting sort for every digit
         for (int exp = 1; max / exp > 0; exp *= 10) {
             countingSort(array, exp);
         }
     }
-
     private static int getMax(int[] array) {
         int max = array[0];
         for (int i = 1; i < array.length; i++) {
@@ -148,32 +138,66 @@ public class SortingMethods {
         }
         return max;
     }
-
     private static void countingSort(int[] array, int exp) {
         int n = array.length;
         int[] output = new int[n];
         int[] count = new int[10];
         Arrays.fill(count, 0);
-
         // Store count of occurrences in count[]
         for (int i = 0; i < n; i++) {
             count[(array[i] / exp) % 10]++;
         }
-
         // Change count[i] so that count[i] contains the actual
         // position of this digit in output[]
         for (int i = 1; i < 10; i++) {
             count[i] += count[i - 1];
         }
-
         // Build the output array
         for (int i = n - 1; i >= 0; i--) {
             output[count[(array[i] / exp) % 10] - 1] = array[i];
             count[(array[i] / exp) % 10]--;
         }
-
-        // Copy the output array to array[], so that array[] now
-        // contains sorted numbers according to the current digit
         System.arraycopy(output, 0, array, 0, n);
+    }
+
+
+    //Bubble
+    public static void bubbleSort(int[] array) {
+        int n = array.length;
+        boolean swapped;
+        for (int i = 0; i < n - 1; i++) {
+            swapped = false;
+            for (int j = 0; j < n - i - 1; j++) {
+                if (array[j] > array[j + 1]) {
+                    // Swap array[j] and array[j+1]
+                    int temp = array[j];
+                    array[j] = array[j + 1];
+                    array[j + 1] = temp;
+
+                    swapped = true;
+                }
+            }
+            if (!swapped) {
+                break;
+            }
+        }
+    }
+
+    //Selection
+    public static void selectionSort(int[] array) {
+        int n = array.length;
+
+        for (int i = 0; i < n - 1; i++) {
+            // Find the minimum element in unsorted part of the array
+            int minIndex = i;
+            for (int j = i + 1; j < n; j++) {
+                if (array[j] < array[minIndex]) {
+                    minIndex = j;
+                }
+            }
+            int temp = array[minIndex];
+            array[minIndex] = array[i];
+            array[i] = temp;
+        }
     }
 }
