@@ -16,9 +16,12 @@ import org.json.simple.parser.JSONParser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PathVariable;
+
 
 @RestController
 @RequestMapping("/api/crypto")
@@ -27,8 +30,8 @@ public class CryptoApiController {
     private HttpStatus status;
     String last_run = null;
 
-    @GetMapping("/market")
-    public ResponseEntity<Object> getCryptoMarketData(@RequestBody) {
+    @GetMapping("/market/{symbolId}")
+    public ResponseEntity<Object> getCryptoMarketData(@PathVariable String symbolId) {
         String today = new Date().toString().substring(0, 10);
 
         ZonedDateTime oneWeekAgo = ZonedDateTime.now(ZoneOffset.UTC).minus(Duration.ofDays(7));
@@ -76,4 +79,3 @@ public class CryptoApiController {
         return new ResponseEntity<>(body, status);
     }
 }
-//clear merge
