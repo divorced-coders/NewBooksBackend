@@ -4,6 +4,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 import org.json.simple.JSONArray;
@@ -12,13 +16,9 @@ import org.json.simple.parser.JSONParser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.Duration;
-import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("/api/crypto")
@@ -28,7 +28,7 @@ public class CryptoApiController {
     String last_run = null;
 
     @GetMapping("/market")
-    public ResponseEntity<Object> getCryptoMarketData(@RequestParam String symbolId) {
+    public ResponseEntity<Object> getCryptoMarketData(@RequestBody) {
         String today = new Date().toString().substring(0, 10);
 
         ZonedDateTime oneWeekAgo = ZonedDateTime.now(ZoneOffset.UTC).minus(Duration.ofDays(7));
@@ -43,6 +43,7 @@ public class CryptoApiController {
         if (last_run == null || !today.equals(last_run)) {
             try {
                 HttpRequest request = HttpRequest.newBuilder()
+                        // .uri(URI.create("https://rest.coinapi.io/v1/symbols?filter_exchange_id=COINBASE"))
                         .uri(URI.create(apiUrl))
                         .header("x-coinapi-key", "A45C5875-F234-49DA-BED1-E30E1E15EA9E")
                         .method("GET", HttpRequest.BodyPublishers.noBody())
