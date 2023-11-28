@@ -14,6 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("/api/crypto")
@@ -25,10 +29,18 @@ public class CryptoApiController {
     @GetMapping("/market")
     public ResponseEntity<Object> getCryptoMarketData() {
         String today = new Date().toString().substring(0, 10);
+
+        ZonedDateTime oneWeekAgo = ZonedDateTime.now(ZoneOffset.UTC).minus(Duration.ofDays(7));
+
+        String startTime = oneWeekAgo.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+
+        int limit = 10;  
+
+        String apiUrl = String.format("https://rest.coinapi.io/v1/trades/BINANCE_SPOT_ETH_BTC/history?time_start=%s&limit=%d", startTime, limit);
         if (last_run == null || !today.equals(last_run)) {
             try {
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create("https://rest.coinapi.io/v1/assets"))
+                        .uri(URI.create(apiUrl))
                         .header("x-coinapi-key", "A45C5875-F234-49DA-BED1-E30E1E15EA9E")
                         .method("GET", HttpRequest.BodyPublishers.noBody())
                         .build();
