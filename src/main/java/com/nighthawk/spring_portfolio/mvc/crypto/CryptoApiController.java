@@ -49,7 +49,7 @@ public class CryptoApiController {
                 this.last_run = today;
             } catch (Exception e) {
                 JSONObject errorBody = new JSONObject();
-                errorBody.put("status", "CoinAPI failure: " + e.getMessage());
+            errorBody.put("status", "CoinAPI failure: " + e.getMessage());
 
                 this.body = errorBody;
                 this.status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -60,3 +60,4 @@ public class CryptoApiController {
         return new ResponseEntity<>(body, status);
     }
 }
+//clear merge
