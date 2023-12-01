@@ -36,6 +36,7 @@ public static void merge(int[] array, int[] left, int[] right) {
             array[k++] = right[j++];
         }
     }
+    //Subarray get vetted onto the calling attachment
     // Copy remaining elements from left subarray, if any
     while (i < leftLength) {
         array[k++] = left[i++];
