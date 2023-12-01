@@ -23,6 +23,7 @@ public static void mergeSort(int[] array) {
     }
 }
 // Merge method to combine two sorted arrays
+//merge unit helps call for the crypto transaction
 public static void merge(int[] array, int[] left, int[] right) {
     int i = 0, j = 0, k = 0;
     int leftLength = left.length;
