@@ -2,7 +2,16 @@ package com.nighthawk.spring_portfolio.mvc.crypto;
 
 //Merge
 public class MergeSort {
+
+    private static long comparisons = 0;
+
     public static void mergeSort(int[] array) {
+        comparisons = 0; // Reset the counter before each sort
+        mergeSortAction(array);
+    }
+
+
+    public static void mergeSortAction(int[] array) {
         int n = array.length;
         if (n > 1) {
             int mid = n / 2;
@@ -16,8 +25,8 @@ public class MergeSort {
             System.arraycopy(array, mid, right, 0, n - mid);
 
             // Recursively sort the left and right subarrays
-            mergeSort(left);
-            mergeSort(right);
+            mergeSortAction(left);
+            mergeSortAction(right);
 
             // Merge the sorted left and right subarrays
             merge(array, left, right);
@@ -31,6 +40,7 @@ public class MergeSort {
         int rightLength = right.length;
         // Compare elements from left and right subarrays and merge them
         while (i < leftLength && j < rightLength) {
+            comparisons++;
             if (left[i] <= right[j]) {
                 array[k++] = left[i++];
             } else {
