@@ -77,3 +77,4 @@ public class CryptoApiController {
         return new ResponseEntity<>(body, status);
     }
 }
+
