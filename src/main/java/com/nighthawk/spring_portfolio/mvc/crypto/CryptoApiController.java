@@ -8,7 +8,9 @@ import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -20,61 +22,146 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
 @RestController
 @RequestMapping("/api/crypto")
 public class CryptoApiController {
-    private Object body; // Use Object type to handle both JSONObject and JSONArray
+    private Object body;
     private HttpStatus status;
-    String last_run = null;
+    private String last_run = null;
 
     @GetMapping("/market/{symbolId}")
     public ResponseEntity<Object> getCryptoMarketData(@PathVariable String symbolId) {
+        try {
+            JSONArray cryptoAPIData = getCryptoMarketDataFromAPI(symbolId);
+
+            List<Transaction> transactions = convertToTransactionList(cryptoAPIData);
+
+            bubbleSortTransactionsBySize(transactions); // Sort using Bubble Sort
+            //radixSortTransactionsBySize(transactions); // Sort using Radix Sort
+
+            return new ResponseEntity<>(transactions, HttpStatus.OK);
+        } catch (Exception e) {
+            JSONObject errorBody = new JSONObject();
+            errorBody.put("status", "Failed to fetch or sort transactions: " + e.getMessage());
+            return new ResponseEntity<>(errorBody, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    
+
+    // Add Radix Sort implementation here
+    private void radixSortTransactionsBySize(List<Transaction> transactions) {
+        if (transactions.isEmpty()) {
+            return;
+        }
+    
+        double maxTransactionSize = transactions.get(0).getSize();
+        for (Transaction transaction : transactions) {
+            if (transaction.getSize() > maxTransactionSize) {
+                maxTransactionSize = transaction.getSize();
+            }
+        }
+    
+        int exp = 1;
+        while (maxTransactionSize / exp > 0) {
+            countingSort(transactions, exp);
+            exp *= 10;
+        }
+    }
+    
+    private void countingSort(List<Transaction> transactions, int exp) {
+        int n = transactions.size();
+        List<Transaction> output = new ArrayList<>(n);
+        int[] count = new int[10];
+    
+        for (Transaction transaction : transactions) {
+            int digit = (int) (transaction.getSize() / exp) % 10;
+            count[digit]++;
+        }
+    
+        for (int i = 1; i < 10; i++) {
+            count[i] += count[i - 1];
+        }
+    
+        for (int i = n - 1; i >= 0; i--) {
+            int digit = (int) (transactions.get(i).getSize() / exp) % 10;
+            output.set(count[digit] - 1, transactions.get(i));
+            count[digit]--;
+        }
+    
+        for (int i = 0; i < n; i++) {
+            transactions.set(i, output.get(i));
+        }
+    }
+    
+
+    private JSONArray getCryptoMarketDataFromAPI(String symbolId) throws Exception {
         String today = new Date().toString().substring(0, 10);
-
         ZonedDateTime oneWeekAgo = ZonedDateTime.now(ZoneOffset.UTC).minus(Duration.ofDays(7));
-
         String startTime = oneWeekAgo.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
-
         int limit = 10;
 
-        // Use user-provided symbolId in the apiUrl
         String apiUrl = String.format("https://rest.coinapi.io/v1/trades/%s/history?time_start=%s&limit=%d", symbolId, startTime, limit);
 
         if (last_run == null || !today.equals(last_run)) {
-            try {
-                HttpRequest request = HttpRequest.newBuilder()
-                        // .uri(URI.create("https://rest.coinapi.io/v1/symbols?filter_exchange_id=COINBASE"))
-                        .uri(URI.create(apiUrl))
-                        .header("x-coinapi-key", "A45C5875-F234-49DA-BED1-E30E1E15EA9E")
-                        .method("GET", HttpRequest.BodyPublishers.noBody())
-                        .build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl))
+                    .header("x-coinapi-key", "A45C5875-F234-49DA-BED1-E30E1E15EA9E")
+                    .method("GET", HttpRequest.BodyPublishers.noBody())
+                    .build();
 
-                HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-                // Parse the response
-                Object parsedResponse = new JSONParser().parse(response.body());
+            Object parsedResponse = new JSONParser().parse(response.body());
 
-                // Check if the parsed response is a JSONArray or JSONObject
-                if (parsedResponse instanceof JSONArray) {
-                    this.body = (JSONArray) parsedResponse;
-                } else if (parsedResponse instanceof JSONObject) {
-                    this.body = (JSONObject) parsedResponse;
-                }
-
-                this.status = HttpStatus.OK;
-                this.last_run = today;
-            } catch (Exception e) {
-                JSONObject errorBody = new JSONObject();
-            errorBody.put("status", "CoinAPI failure: " + e.getMessage());
-
-                this.body = errorBody;
-                this.status = HttpStatus.INTERNAL_SERVER_ERROR;
-                this.last_run = null;
+            if (parsedResponse instanceof JSONArray) {
+                return (JSONArray) parsedResponse;
+            } else {
+                throw new Exception("Invalid response format");
             }
         }
+        return new JSONArray();
+    }
 
-        return new ResponseEntity<>(body, status);
+    private List<Transaction> convertToTransactionList(JSONArray cryptoAPIData) {
+        List<Transaction> transactions = new ArrayList<>();
+        for (Object obj : cryptoAPIData) {
+            JSONObject transactionData = (JSONObject) obj;
+            double size = Double.parseDouble(transactionData.get("size").toString());
+            Transaction transaction = new Transaction(size);
+            transactions.add(transaction);
+        }
+        return transactions;
+    }
+
+    private void bubbleSortTransactionsBySize(List<Transaction> transactions) {
+        int n = transactions.size();
+        boolean swapped;
+        do {
+            swapped = false;
+            for (int i = 0; i < n - 1; i++) {
+                if (transactions.get(i).getSize() > transactions.get(i + 1).getSize()) {
+                    Transaction temp = transactions.get(i);
+                    transactions.set(i, transactions.get(i + 1));
+                    transactions.set(i + 1, temp);
+                    swapped = true;
+                }
+            }
+            n--;
+        } while (swapped);
+    }
+    
+    // Transaction class representing individual transactions
+    public static class Transaction {
+        private double size;
+
+        public Transaction(double size) {
+            this.size = size;
+        }
+
+        public double getSize() {
+            return size;
+        }
+        // Add other attributes and methods as needed
     }
 }
-
