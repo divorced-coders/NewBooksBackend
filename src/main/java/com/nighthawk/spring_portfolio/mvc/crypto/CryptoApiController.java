@@ -11,7 +11,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -37,9 +40,6 @@ public class CryptoApiController {
 
             List<Transaction> transactions = convertToTransactionList(cryptoAPIData);
 
-            bubbleSortTransactionsBySize(transactions); // Sort using Bubble Sort
-            selectionSortTransactionsBySize(transactions); // Sort using Radix Sort
-
             return new ResponseEntity<>(transactions, HttpStatus.OK);
         } catch (Exception e) {
             JSONObject errorBody = new JSONObject();
@@ -49,67 +49,73 @@ public class CryptoApiController {
     }
 
     @GetMapping("/market/{symbolId}/selection")
+public ResponseEntity<Object> sortBySelection(@PathVariable String symbolId) {
+    try {
+        long startTime = System.currentTimeMillis();
 
-        public ResponseEntity<Object> sortBySelection(@PathVariable String symbolId) {
-        try {
-            JSONArray cryptoAPIData = getCryptoMarketDataFromAPI(symbolId);
+        JSONArray cryptoAPIData = getCryptoMarketDataFromAPI(symbolId);
 
-            List<Transaction> transactions = convertToTransactionList(cryptoAPIData);
+        List<Transaction> transactions = convertToTransactionList(cryptoAPIData);
 
-            selectionSortTransactionsBySize(transactions);
+        AtomicInteger comparisons = new AtomicInteger(0);
+        AtomicInteger swaps = new AtomicInteger(0);
 
-            return new ResponseEntity<>(transactions, HttpStatus.OK);
-        } catch (Exception e) {
-            JSONObject errorBody = new JSONObject();
-            errorBody.put("status", "Failed to fetch or sort transactions: " + e.getMessage());
-            return new ResponseEntity<>(errorBody, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        selectionSortTransactionsBySize(transactions, comparisons, swaps);
+
+        long endTime = System.currentTimeMillis();
+        long executionTime = endTime - startTime;
+
+        String successMessage = "Transactions sorted successfully by size. " +
+                "Comparisons: " + comparisons.get() + ", Swaps: " + swaps.get() +
+                ". Execution time: " + executionTime + " milliseconds";
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", successMessage);
+        response.put("sortedTransactions", transactions);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch (Exception e) {
+        JSONObject errorBody = new JSONObject();
+        errorBody.put("status", "Failed to fetch or sort transactions: " + e.getMessage());
+        return new ResponseEntity<>(errorBody, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+}
+
+
 
     @GetMapping("/market/{symbolId}/bubble")
 
         public ResponseEntity<Object> sortByBubble(@PathVariable String symbolId) {
         try {
+            long startTime = System.currentTimeMillis();
+
             JSONArray cryptoAPIData = getCryptoMarketDataFromAPI(symbolId);
 
             List<Transaction> transactions = convertToTransactionList(cryptoAPIData);
 
-            bubbleSortTransactionsBySize(transactions);
+            AtomicInteger comparisons = new AtomicInteger(0);
+            AtomicInteger swaps = new AtomicInteger(0);
 
-            return new ResponseEntity<>(transactions, HttpStatus.OK);
+            bubbleSortTransactionsBySize(transactions, comparisons, swaps);
+
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+
+            String successMessage = "Transactions sorted successfully by size. " +
+                    "Comparisons: " + comparisons.get() + ", Swaps: " + swaps.get() +
+                    ". Execution time: " + executionTime + " milliseconds";
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", successMessage);
+            response.put("sortedTransactions", transactions);
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             JSONObject errorBody = new JSONObject();
             errorBody.put("status", "Failed to fetch or sort transactions: " + e.getMessage());
             return new ResponseEntity<>(errorBody, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
-    private void countingSort(List<Transaction> transactions, int exp) {
-        int n = transactions.size();
-        List<Transaction> output = new ArrayList<>(n);
-        int[] count = new int[10];
-    
-        for (Transaction transaction : transactions) {
-            int digit = (int) (transaction.getSize() / exp) % 10;
-            count[digit]++;
-        }
-    
-        for (int i = 1; i < 10; i++) {
-            count[i] += count[i - 1];
-        }
-    
-        for (int i = n - 1; i >= 0; i--) {
-            int digit = (int) (transactions.get(i).getSize() / exp) % 10;
-            output.set(count[digit] - 1, transactions.get(i));
-            count[digit]--;
-        }
-    
-        for (int i = 0; i < n; i++) {
-            transactions.set(i, output.get(i));
-        }
-    }
-    
 
     private JSONArray getCryptoMarketDataFromAPI(String symbolId) throws Exception {
         String today = new Date().toString().substring(0, 10);
@@ -150,31 +156,38 @@ public class CryptoApiController {
         return transactions;
     }
 
-    private void bubbleSortTransactionsBySize(List<Transaction> transactions) {
+    private void bubbleSortTransactionsBySize(List<Transaction> transactions, AtomicInteger comparisons, AtomicInteger swaps) {
         int n = transactions.size();
         boolean swapped;
+    
         do {
             swapped = false;
+    
             for (int i = 0; i < n - 1; i++) {
+                comparisons.incrementAndGet(); // Increment comparison count
+    
                 if (transactions.get(i).getSize() > transactions.get(i + 1).getSize()) {
                     Transaction temp = transactions.get(i);
                     transactions.set(i, transactions.get(i + 1));
                     transactions.set(i + 1, temp);
                     swapped = true;
+    
+                    swaps.incrementAndGet(); // Increment swap count
                 }
             }
+    
             n--;
         } while (swapped);
     }
+    
 
-    private void selectionSortTransactionsBySize(List<Transaction> transactions) {
+    private void selectionSortTransactionsBySize(List<Transaction> transactions, AtomicInteger comparisons, AtomicInteger swaps) {
         int n = transactions.size();
     
         for (int i = 0; i < n - 1; i++) {
-            // Find the minimum element in the unsorted part of the list
             int minIndex = i;
             for (int j = i + 1; j < n; j++) {
-                // Compare transactions based on their size (assuming Transaction has a getSize() method)
+                comparisons.incrementAndGet(); // Increment comparison count
                 if (transactions.get(j).getSize() < transactions.get(minIndex).getSize()) {
                     minIndex = j;
                 }
@@ -184,8 +197,11 @@ public class CryptoApiController {
             Transaction temp = transactions.get(minIndex);
             transactions.set(minIndex, transactions.get(i));
             transactions.set(i, temp);
+            
+            swaps.incrementAndGet(); // Increment swap count
         }
     }
+    
     
     
     
