@@ -9,6 +9,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class CryptoApiController {
             List<Transaction> transactions = convertToTransactionList(cryptoAPIData);
 
             bubbleSortTransactionsBySize(transactions); // Sort using Bubble Sort
-            //radixSortTransactionsBySize(transactions); // Sort using Radix Sort
+            selectionSortTransactionsBySize(transactions); // Sort using Radix Sort
 
             return new ResponseEntity<>(transactions, HttpStatus.OK);
         } catch (Exception e) {
@@ -47,28 +48,43 @@ public class CryptoApiController {
         }
     }
 
-    
+    @GetMapping("/market/{symbolId}/selection")
 
-    // Add Radix Sort implementation here
-    private void radixSortTransactionsBySize(List<Transaction> transactions) {
-        if (transactions.isEmpty()) {
-            return;
-        }
-    
-        double maxTransactionSize = transactions.get(0).getSize();
-        for (Transaction transaction : transactions) {
-            if (transaction.getSize() > maxTransactionSize) {
-                maxTransactionSize = transaction.getSize();
-            }
-        }
-    
-        int exp = 1;
-        while (maxTransactionSize / exp > 0) {
-            countingSort(transactions, exp);
-            exp *= 10;
+        public ResponseEntity<Object> sortBySelection(@PathVariable String symbolId) {
+        try {
+            JSONArray cryptoAPIData = getCryptoMarketDataFromAPI(symbolId);
+
+            List<Transaction> transactions = convertToTransactionList(cryptoAPIData);
+
+            selectionSortTransactionsBySize(transactions);
+
+            return new ResponseEntity<>(transactions, HttpStatus.OK);
+        } catch (Exception e) {
+            JSONObject errorBody = new JSONObject();
+            errorBody.put("status", "Failed to fetch or sort transactions: " + e.getMessage());
+            return new ResponseEntity<>(errorBody, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
+    @GetMapping("/market/{symbolId}/bubble")
+
+        public ResponseEntity<Object> sortByBubble(@PathVariable String symbolId) {
+        try {
+            JSONArray cryptoAPIData = getCryptoMarketDataFromAPI(symbolId);
+
+            List<Transaction> transactions = convertToTransactionList(cryptoAPIData);
+
+            bubbleSortTransactionsBySize(transactions);
+
+            return new ResponseEntity<>(transactions, HttpStatus.OK);
+        } catch (Exception e) {
+            JSONObject errorBody = new JSONObject();
+            errorBody.put("status", "Failed to fetch or sort transactions: " + e.getMessage());
+            return new ResponseEntity<>(errorBody, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
     private void countingSort(List<Transaction> transactions, int exp) {
         int n = transactions.size();
         List<Transaction> output = new ArrayList<>(n);
@@ -150,6 +166,28 @@ public class CryptoApiController {
             n--;
         } while (swapped);
     }
+
+    private void selectionSortTransactionsBySize(List<Transaction> transactions) {
+        int n = transactions.size();
+    
+        for (int i = 0; i < n - 1; i++) {
+            // Find the minimum element in the unsorted part of the list
+            int minIndex = i;
+            for (int j = i + 1; j < n; j++) {
+                // Compare transactions based on their size (assuming Transaction has a getSize() method)
+                if (transactions.get(j).getSize() < transactions.get(minIndex).getSize()) {
+                    minIndex = j;
+                }
+            }
+    
+            // Swap the found minimum element with the first element
+            Transaction temp = transactions.get(minIndex);
+            transactions.set(minIndex, transactions.get(i));
+            transactions.set(i, temp);
+        }
+    }
+    
+    
     
     // Transaction class representing individual transactions
     public static class Transaction {
