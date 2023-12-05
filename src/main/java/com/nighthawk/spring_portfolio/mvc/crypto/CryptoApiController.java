@@ -33,95 +33,11 @@ public class CryptoApiController {
     private HttpStatus status;
     private String last_run = null;
 
-    @GetMapping("/market/{symbolId}")
-    public ResponseEntity<Object> getCryptoMarketData(@PathVariable String symbolId) {
-        try {
-            JSONArray cryptoAPIData = getCryptoMarketDataFromAPI(symbolId);
-
-            List<Transaction> transactions = convertToTransactionList(cryptoAPIData);
-
-            return new ResponseEntity<>(transactions, HttpStatus.OK);
-        } catch (Exception e) {
-            JSONObject errorBody = new JSONObject();
-            errorBody.put("status", "Failed to fetch or sort transactions: " + e.getMessage());
-            return new ResponseEntity<>(errorBody, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/market/{symbolId}/selection")
-public ResponseEntity<Object> sortBySelection(@PathVariable String symbolId) {
-    try {
-        long startTime = System.currentTimeMillis();
-
-        JSONArray cryptoAPIData = getCryptoMarketDataFromAPI(symbolId);
-
-        List<Transaction> transactions = convertToTransactionList(cryptoAPIData);
-
-        AtomicInteger comparisons = new AtomicInteger(0);
-        AtomicInteger swaps = new AtomicInteger(0);
-
-        selectionSortTransactionsBySize(transactions, comparisons, swaps);
-
-        long endTime = System.currentTimeMillis();
-        long executionTime = endTime - startTime;
-
-        String successMessage = "Transactions sorted successfully by size. " +
-                "Comparisons: " + comparisons.get() + ", Swaps: " + swaps.get() +
-                ". Execution time: " + executionTime + " milliseconds";
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", successMessage);
-        response.put("sortedTransactions", transactions);
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (Exception e) {
-        JSONObject errorBody = new JSONObject();
-        errorBody.put("status", "Failed to fetch or sort transactions: " + e.getMessage());
-        return new ResponseEntity<>(errorBody, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-}
-
-
-
-    @GetMapping("/market/{symbolId}/bubble")
-
-        public ResponseEntity<Object> sortByBubble(@PathVariable String symbolId) {
-        try {
-            long startTime = System.currentTimeMillis();
-
-            JSONArray cryptoAPIData = getCryptoMarketDataFromAPI(symbolId);
-
-            List<Transaction> transactions = convertToTransactionList(cryptoAPIData);
-
-            AtomicInteger comparisons = new AtomicInteger(0);
-            AtomicInteger swaps = new AtomicInteger(0);
-
-            bubbleSortTransactionsBySize(transactions, comparisons, swaps);
-
-            long endTime = System.currentTimeMillis();
-            long executionTime = endTime - startTime;
-
-            String successMessage = "Transactions sorted successfully by size. " +
-                    "Comparisons: " + comparisons.get() + ", Swaps: " + swaps.get() +
-                    ". Execution time: " + executionTime + " milliseconds";
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", successMessage);
-            response.put("sortedTransactions", transactions);
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            JSONObject errorBody = new JSONObject();
-            errorBody.put("status", "Failed to fetch or sort transactions: " + e.getMessage());
-            return new ResponseEntity<>(errorBody, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    private JSONArray getCryptoMarketDataFromAPI(String symbolId) throws Exception {
+    protected JSONArray getCryptoMarketDataFromAPI(String symbolId) throws Exception {
         String today = new Date().toString().substring(0, 10);
         ZonedDateTime oneWeekAgo = ZonedDateTime.now(ZoneOffset.UTC).minus(Duration.ofDays(7));
         String startTime = oneWeekAgo.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
-        int limit = 10;
+        int limit = 20;
 
         String apiUrl = String.format("https://rest.coinapi.io/v1/trades/%s/history?time_start=%s&limit=%d", symbolId, startTime, limit);
 
@@ -145,7 +61,7 @@ public ResponseEntity<Object> sortBySelection(@PathVariable String symbolId) {
         return new JSONArray();
     }
 
-    private List<Transaction> convertToTransactionList(JSONArray cryptoAPIData) {
+    protected List<Transaction> convertToTransactionList(JSONArray cryptoAPIData) {
         List<Transaction> transactions = new ArrayList<>();
         for (Object obj : cryptoAPIData) {
             JSONObject transactionData = (JSONObject) obj;
