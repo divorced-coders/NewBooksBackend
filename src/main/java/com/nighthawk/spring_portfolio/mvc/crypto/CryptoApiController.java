@@ -71,55 +71,7 @@ public class CryptoApiController {
         }
         return transactions;
     }
-
-    private void bubbleSortTransactionsBySize(List<Transaction> transactions, AtomicInteger comparisons, AtomicInteger swaps) {
-        int n = transactions.size();
-        boolean swapped;
-    
-        do {
-            swapped = false;
-    
-            for (int i = 0; i < n - 1; i++) {
-                comparisons.incrementAndGet(); // Increment comparison count
-    
-                if (transactions.get(i).getSize() > transactions.get(i + 1).getSize()) {
-                    Transaction temp = transactions.get(i);
-                    transactions.set(i, transactions.get(i + 1));
-                    transactions.set(i + 1, temp);
-                    swapped = true;
-    
-                    swaps.incrementAndGet(); // Increment swap count
-                }
-            }
-    
-            n--;
-        } while (swapped);
-    }
     //hi
-
-    private void selectionSortTransactionsBySize(List<Transaction> transactions, AtomicInteger comparisons, AtomicInteger swaps) {
-        int n = transactions.size();
-    
-        for (int i = 0; i < n - 1; i++) {
-            int minIndex = i;
-            for (int j = i + 1; j < n; j++) {
-                comparisons.incrementAndGet(); // Increment comparison count
-                if (transactions.get(j).getSize() < transactions.get(minIndex).getSize()) {
-                    minIndex = j;
-                }
-            }
-    
-            // Swap the found minimum element with the first element
-            Transaction temp = transactions.get(minIndex);
-            transactions.set(minIndex, transactions.get(i));
-            transactions.set(i, temp);
-            
-            swaps.incrementAndGet(); // Increment swap count
-        }
-    }
-    
-    
-    
     
     // Transaction class representing individual transactions
     public static class Transaction {
