@@ -63,8 +63,8 @@ public class SortController extends CryptoApiController {
 
             Map<String, Object> response = new HashMap<>();
             response.put("comparisonResult", comparisonResult);
-            response.put(algorithm1, "Execution time: " + executionTimeAlgorithm1 + " milliseconds");
-            response.put(algorithm2, "Execution time: " + executionTimeAlgorithm2 + " milliseconds");
+            response.put("algorithm1", "Execution time: " + executionTimeAlgorithm1 + " milliseconds");
+            response.put("algorithm2", "Execution time: " + executionTimeAlgorithm2 + " milliseconds");
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
@@ -119,6 +119,16 @@ public class SortController extends CryptoApiController {
             case "merge":
                 return new MergeSort();
             case "insertion":
+                return new InsertionSort();
+            case "Bubble":
+                return new BubbleSort();
+            case "Selection":
+                return new SelectionSort();
+            case "Heap":
+                return new HeapSort();
+            case "Merge":
+                return new MergeSort();
+            case "Insertion":
                 return new InsertionSort();
             default:
                 throw new IllegalArgumentException("Unsupported sorting algorithm: " + algorithm);

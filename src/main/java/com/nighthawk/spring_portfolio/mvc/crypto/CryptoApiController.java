@@ -46,7 +46,7 @@ public class CryptoApiController {
         if (last_run == null || !today.equals(last_run)) {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(apiUrl))
-                    .header("x-coinapi-key", "A45C5875-F234-49DA-BED1-E30E1E15EA9E")
+                    .header("x-coinapi-key", "6C1650DE-AEEA-4697-AB00-FB9050DCC1D3")
                     .method("GET", HttpRequest.BodyPublishers.noBody())
                     .build();
 
